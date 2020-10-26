@@ -1,0 +1,48 @@
+---
+# tasks file for configure_sso
+
+- name: Deploy 3Scale Realm
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    src: "{{ role_path }}/files/3scalerealm.yml"
+
+- name: Wait for the 3Scale realm to be created
+  shell: oc get KeycloakRealm 3scale-realm -n sso -o jsonpath="{.status.ready}"
+  register: ssooperator
+  until: ssooperator.stdout.find("true") != -1
+  retries: 200
+
+- name: Create first user
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    src: "{{ role_path }}/files/user1.yml"
+
+- name: Create second user
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    src: "{{ role_path }}/files/user2.yml"
+
+- name: Create third user
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    src: "{{ role_path }}/files/user3.yml"
+
+- name: Create fourth user
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    src: "{{ role_path }}/files/user4.yml"

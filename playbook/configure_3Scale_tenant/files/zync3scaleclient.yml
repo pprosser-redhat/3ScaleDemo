@@ -1,0 +1,16 @@
+---
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakClient
+metadata:
+  name: zync-client
+  labels:
+    app: sso
+  namespace: sso
+spec:
+  realmSelector:
+    matchLabels:
+      realm: 3scale-realm
+  client:
+    clientId: zync-client
+    secret: zync-client-secret
+    clientAuthenticatorType: client-secret

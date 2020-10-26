@@ -1,0 +1,58 @@
+---
+# tasks file for sso
+
+- name: Create SSO namespace
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    src: "{{ role_path }}/files/ssonamespace.yml"
+
+- name: Wait for SSO namespace to be created
+  shell: oc get namespace sso -o jsonpath="{.status.phase}"
+  register: ssons
+  until: ssons.stdout.find("Active") != -1
+  retries: 200
+
+- name: Deploy SSO Operator Group
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    src: "{{ role_path }}/files/ssooperatorgroup.yml"
+
+- name: Deploy SSO Operator
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    src: "{{ role_path }}/files/ssooperator.yml"
+
+- name: Get the version of the operator being deployed
+  shell: oc get deployment rhsso-operator -n sso -o jsonpath="{..ownerReferences[0].name}"
+  register: ssooperatorclusterversion
+  until: ssooperatorclusterversion is not failed
+  retries: 20
+
+- name: Wait for the SSO Operator to start
+  shell: oc get csv {{ ssooperatorclusterversion.stdout }} -n sso -o jsonpath="{.status.reason}"
+  register: ssooperator
+  until: ssooperator.stdout.find("InstallSucceeded") != -1
+  retries: 200
+
+- name: Deploy SSO instance
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    src: "{{ role_path }}/files/sso.yml"
+
+- name: Wait for the SSO to deploy and start
+  shell: oc get keycloak 3scale-sso -n sso -o jsonpath="{.status.ready}"
+  register: ssooperator
+  until: ssooperator.stdout.find("true") != -1
+  retries: 200

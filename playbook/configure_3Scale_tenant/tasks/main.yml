@@ -1,0 +1,76 @@
+---
+# tasks file for configure_3Scale_tenant
+
+- name: Define tenant admin password
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    definition:
+      kind: Secret
+      apiVersion: v1
+      metadata:
+        name: red-hat-tenant-admin-secret
+        namespace: amp
+      stringData:
+        admin_password: "{{ ADMIN_PASSWORD }}"
+
+- name: Define tenant admin password
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    definition:
+      kind: Secret
+      apiVersion: v1
+      metadata:
+        name: red-hat-tenant-admin-secret
+        namespace: amp
+      stringData:
+        admin_password: "{{ ADMIN_PASSWORD }}"
+
+- name: Define 3Scale tenant
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    definition:
+      apiVersion: capabilities.3scale.net/v1alpha1
+      kind: Tenant
+      metadata:
+        name: redhat-tenant
+        namespace: amp
+        labels:
+          tenant: redhat-tenant
+      spec:
+        email: admin@example.com
+        masterCredentialsRef:
+          name: system-seed
+        organizationName: Red Hat
+        passwordCredentialsRef:
+          name: red-hat-tenant-admin-secret
+        systemMasterUrl: "https://master.{{ wildcarddomain }}"
+        tenantSecretRef:
+          name: red-hat-tenant
+          namespace: amp
+        username: admin
+
+- name: create zync client secret in RH SSO
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    src: "{{ role_path }}/files/zync3scaleclient.yml"
+
+- name: 3scaletoken
+  pause:
+    prompt: "Please access the 3Scale admin portal here https://red-hat-admin.{{ wildcarddomain }} and create a token. Once created, paste it here"
+    echo: yes
+  register: userinput
+
+- set_fact:
+    tenanttoken: "{{ userinput.user_input }}"

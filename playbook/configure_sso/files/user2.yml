@@ -1,0 +1,27 @@
+---
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakUser
+metadata:
+  name: mart
+  labels:
+    realm: 3scale-realm
+  namespace: sso
+spec:
+  user:
+    username: mart
+    firstName: Mart
+    lastName: Prosser
+    credentials:
+      - items: 
+        temporary: false
+        type: password
+        value: test123
+    email: martpprosser@redhat.com
+    enabled: true
+    emailVerified: true
+    realmRoles:
+      - "offline_access"
+      - "uma_authorization"
+  realmSelector:
+    matchLabels:
+      realm: 3scale-realm

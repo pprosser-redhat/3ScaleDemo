@@ -1,0 +1,16 @@
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakRealm
+metadata:
+  name: 3scale-realm
+  namespace: sso
+  labels:
+    realm: 3scale-realm
+spec:
+  realm:
+    id: 3scale
+    realm: 3scale
+    enabled: true
+    displayName: 3Scale Demo Relam
+  instanceSelector:
+    matchLabels:
+      app: sso

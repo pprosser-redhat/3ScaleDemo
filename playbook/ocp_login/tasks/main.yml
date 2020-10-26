@@ -1,0 +1,5 @@
+---
+# tasks file for ocp_login
+
+- name: login to Openshift at the specified URL
+  shell: oc login {{ ocp_url }} --token={{ ocp_login_token }} --insecure-skip-tls-verify

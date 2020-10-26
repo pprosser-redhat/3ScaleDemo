@@ -1,0 +1,10 @@
+---
+apiVersion: apps.3scale.net/v1alpha1
+kind: APIManager
+metadata:
+  name: 3scaledemo
+  namespace: amp
+spec:
+  wildcardDomain: {{ wildcarddomain }}
+  resourceRequirementsEnabled: false
+  

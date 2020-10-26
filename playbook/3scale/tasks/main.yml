@@ -1,0 +1,127 @@
+---
+# tasks file for 3scale
+
+- name: Create AMP namespace
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    src: "{{ role_path }}/files/ampnamespace.yml"
+
+- name: Wait for AMP namespace to be created
+  shell: oc get namespace amp -o jsonpath="{.status.phase}"
+  register: ampns
+  until: ampns.stdout.find("Active") != -1
+  retries: 200
+
+- name: Create AMP registry auth
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: threescale-registry-auth
+        namespace: amp
+      data:
+        .dockerconfigjson: "{{ service_account }}"
+      type: kubernetes.io/dockerconfigjson
+
+- name: Deploy 3Scale Operator Group
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    src: "{{ role_path }}/files/ampoperatorgroup.yml"
+
+- name: Deploy the 3Scale Operator
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    src: "{{ role_path }}/files/3scaleoperator.yml"
+
+- name: Get the version of the 3Scale operator being deployed
+  shell: oc get deployment 3scale-operator -n amp -o jsonpath="{..ownerReferences[0].name}"
+  register: ampoperatorclusterversion
+  until: ampoperatorclusterversion is not failed
+  retries: 20
+
+- name: Wait for the 3Scale Operator to start
+  shell: oc get csv {{ ampoperatorclusterversion.stdout }} -n amp -o jsonpath="{.status.reason}"
+  register: ampoperator
+  until: ampoperator.stdout.find("InstallSucceeded") != -1
+  retries: 200
+
+- name: Define secret for S3 bucket
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    definition:
+      kind: Secret
+      metadata:
+        namespace: amp
+        name: aws-auth
+      stringData:
+        AWS_ACCESS_KEY_ID: "{{ AWS_ACCESS_KEY_ID }}"
+        AWS_SECRET_ACCESS_KEY: "{{ AWS_SECRET_ACCESS_KEY }}"
+        AWS_BUCKET: "{{ AWS_BUCKET }}"
+        AWS_REGION: "{{ AWS_REGION }}"
+      type: Opaque
+
+- name: Define system-seed so passwords are known
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    definition:
+      kind: Secret
+      apiVersion: v1
+      metadata:
+        name: system-seed
+        namespace: amp
+        labels:
+          app: 3scale-api-management
+          threescale_component: system
+      stringData:
+        MASTER_USER: "{{ MASTER_USER }}"
+        ADMIN_PASSWORD: "{{ ADMIN_PASSWORD }}"
+        MASTER_PASSWORD: "{{ MASTER_PASSWORD }}"
+        ADMIN_USER: "{{ ADMIN_USER }}"
+
+- name: Create an instance of 3Scale
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    definition:
+      apiVersion: apps.3scale.net/v1alpha1
+      kind: APIManager
+      metadata:
+        name: 3scaledemo
+        namespace: amp
+      spec:
+        wildcardDomain: "{{ wildcarddomain }}"
+        resourceRequirementsEnabled: false
+        system:
+          fileStorage:
+            simpleStorageService:
+              configurationSecretRef:
+                name: aws-auth
+
+- name: Wait for 3Scale to start
+  shell: oc get APIManager 3scaledemo -n amp -o jsonpath="{.status.deployments.ready"}
+  register: ampoperator
+  until: ampoperator.stdout.find("[apicast-production apicast-staging backend-cron backend-listener backend-redis backend-worker system-app system-memcache system-mysql system-redis system-sidekiq system-sphinx zync zync-database zync-que]") != -1
+  retries: 200
+  

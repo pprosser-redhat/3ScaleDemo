@@ -1,0 +1,22 @@
+# Put the Openshift URL and token in please
+ocp_url: https://api.penryn.demolab.local:6443
+ocp_login_token: 
+
+# Openshift wildcard domain for 3Scale :
+
+wildcarddomain: apps.penryn.demolab.local
+# AWS Access keys for 3Scale S3 storage requirements 
+
+AWS_ACCESS_KEY_ID: 
+AWS_SECRET_ACCESS_KEY: 
+AWS_BUCKET: 
+AWS_REGION: 
+
+# Red Hat registry credentials
+
+service_account: 
+
+MASTER_USER: 
+ADMIN_PASSWORD: 
+MASTER_PASSWORD: 
+ADMIN_USER: 

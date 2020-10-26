@@ -1,0 +1,16 @@
+---
+apiVersion: local.storage.openshift.io/v1
+kind: LocalVolume
+metadata:
+  name: example
+  namespace: amp
+spec:
+  logLevel: Normal
+  managementState: Managed
+  storageClassDevices:
+    - devicePaths:
+        - /dev/vde
+        - /dev/vdf
+      fsType: ext4
+      storageClassName: foobar
+      volumeMode: Filesystem

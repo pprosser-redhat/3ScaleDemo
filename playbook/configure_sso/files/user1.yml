@@ -1,0 +1,27 @@
+---
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakUser
+metadata:
+  name: phil
+  labels:
+    realm: 3scale-realm
+  namespace: sso
+spec:
+  user:
+    username: phil
+    firstName: Phil
+    lastName: Prosser
+    credentials:
+      - items: 
+        temporary: false
+        type: password
+        value: test123
+    email: pprosser@redhat.com
+    enabled: true
+    emailVerified: true
+    realmRoles:
+      - "offline_access"
+      - "uma_authorization"
+  realmSelector:
+    matchLabels:
+      realm: 3scale-realm
