@@ -15,34 +15,110 @@
   until: ssooperator.stdout.find("true") != -1
   retries: 200
 
-- name: Create first user
-  k8s:
-    api_key: "{{ ocp_login_token }}"
-    host: "{{ ocp_url }}"
-    validate_certs: no
-    state: present
-    src: "{{ role_path }}/files/user1.yml"
 
-- name: Create second user
+- name: Create users
   k8s:
     api_key: "{{ ocp_login_token }}"
     host: "{{ ocp_url }}"
     validate_certs: no
     state: present
-    src: "{{ role_path }}/files/user2.yml"
+    definition:
+      apiVersion: keycloak.org/v1alpha1
+      kind: KeycloakUser
+      metadata:
+        name: "{{ item.username }}"
+        labels:
+          realm: 3scale-realm
+        namespace: sso
+      spec:
+        user:
+          username: "{{ item.username }}"
+          firstName: "{{ item.firstname }}"
+          lastName: "{{ item.lastName }}"
+          credentials:
+            - items: 
+              temporary: false
+              type: password
+              value: test123
+          email: "{{ item.email }}"
+          enabled: true
+          emailVerified: true
+          realmRoles:
+            - "offline_access"
+            - "uma_authorization"
+          clientRoles:
+            account:
+              - "manage-account"
+              - "view-profile"
+            realm-management:
+              - "manage-users"
+        realmSelector:
+          matchLabels:
+            realm: 3scale-realm
+  loop:
+    - { username: 'phil', firstname: 'Phil', lastName: 'Prosser', email: 'pprosser@redhat.com' }
+    - { username: 'mart', firstname: 'Mart', lastName: 'Prosser', email: 'martprosser@redhat.com' }
+    - { username: 'jake', firstname: 'jake', lastName: 'Restricted', email: 'jake@redhat.com' }
+    - { username: 'jon', firstname: 'jon', lastName: 'Tester', email: 'jon@redhat.com' }
 
-- name: Create third user
+- name: create 3scale-admin client RH SSO, used for OIDC sync
   k8s:
     api_key: "{{ ocp_login_token }}"
     host: "{{ ocp_url }}"
     validate_certs: no
     state: present
-    src: "{{ role_path }}/files/user3.yml"
+    src: "{{ role_path }}/files/3scale-admin.yml"
 
-- name: Create fourth user
+- name: create 3scaleadminportal client in RH SSO, used for Admina and Dev Portal SSO
   k8s:
     api_key: "{{ ocp_login_token }}"
     host: "{{ ocp_url }}"
     validate_certs: no
     state: present
-    src: "{{ role_path }}/files/user4.yml"
+    src: "{{ role_path }}/files/3scaleadminportal.yml"
+
+- name: Create clear sso sso service to avoid self signed cert problems
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    definition:
+      kind: Service
+      apiVersion: v1
+      metadata:
+        name: sso-clear
+        namespace: sso
+      spec:
+        ports:
+          - name: keycloak
+            protocol: TCP
+            port: 8080
+            targetPort: 8080
+        selector:
+          app: keycloak
+          component: keycloak
+
+- name: Create clear sso sso route to avoid self signed cert problems
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    definition:
+      kind: Route
+      apiVersion: route.openshift.io/v1
+      metadata:
+        name: sso-clear
+        namespace: sso
+      spec:
+        host: sso-sso-clear.{{ wildcarddomain }}
+        to:
+          kind: Service
+          name: sso-clear
+          weight: 100
+        port:
+          targetPort: keycloak
+        wildcardPolicy: None
+
+    

@@ -1,0 +1,21 @@
+---
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakClient
+metadata:
+  name: 3scaleadminportal
+  namespace: sso
+spec:
+  client:
+    clientAuthenticatorType: client-secret
+    clientId: 3scaleadminportal
+    secret: 3scaleadminportal-secret
+    directAccessGrantsEnabled: false
+    publicClient: false
+    redirectUris:
+      - "https://{{ 3scale_tenant }}-admin.{{ wildcarddomain }}/*"
+      - "https://{{ 3scale_tenant }}.{{ wildcarddomain }}/*"
+    rootUrl: "https://{{ 3scale_tenant }}-admin.{{ wildcarddomain }}"
+    standardFlowEnabled: true
+  realmSelector:
+    matchLabels:
+      realm: 3scale-realm

@@ -1,0 +1,25 @@
+---
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakClient
+metadata:
+  name: 3scale-admin
+  namespace: sso
+  labels:
+    app: sso
+spec:
+  client:
+    clientAuthenticatorType: client-secret
+    clientId: 3scale-admin
+    directAccessGrantsEnabled: false
+    publicClient: false
+    secret: 3scale-admin-secret
+    serviceAccountsEnabled: true
+    standardFlowEnabled: false
+  realmSelector:
+    matchLabels:
+      realm: 3scale-realm
+
+# 
+# Haven't worked out how to add service account role via crd yet. Need to look at the client in SSO, click on the "Service Account Role"
+# and under client roles type "realm-management" and move "manage-clients" to assigned roles. 
+#
