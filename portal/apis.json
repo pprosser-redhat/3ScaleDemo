@@ -1,0 +1,200 @@
+# Title: apis.json
+# Section: .Root
+# Path: /apis.json
+# Layout: empty
+#  Advanced Options - Content type: - Content type: application/json
+{
+    "name": "World Company",
+    "description": "This is an inventory of APIs available as part of the API World Company network.",
+    "image": "http://i.imgur.com/ntV92b4.png",
+    "tags": [
+      "Telecommunications",
+      "Communications"
+    ],
+    "created": "2017-01-24",
+    "modified": "2017-01-24",
+    "url": "http://worldcompany.com/apis.json",
+    "specificationVersion": "0.14",
+    "apis": [
+      {
+        "name": "SMS API",
+        "description": "Short Message Service (SMS) is a text messaging service component of most telephone, World Wide Web, and mobile telephony systems. It uses standardized communication protocols to enable mobile phone devices to exchange short text messages. We provide an API for it to let you send SMS to your customers.",
+        "X-3scale":{
+          "service_id":1234,
+          "swagger_system_name":"echo"
+        },
+        "image": "https://enterprisedemo.3scale.net/images/circle2.png",
+        "humanURL": "https://worldcompany.com/",
+        "baseURL": "http://sms.worldcompany.com",
+        "tags": [
+          "sms",
+          "text"
+        ],
+        "properties": [
+          {
+            "type": "X-signup",
+            "url": "https://worldcompany.com/"
+          },
+          {
+            "type": "Swagger",
+            "url": "https://worldcompany.com/swagger/spec/sms2_0.json"
+          }
+        ],
+        "contact": [
+          {
+            "FN": "World Company",
+            "email": "info@worldcompany.com",
+            "X-twitter": "worldcompany"
+          }
+        ]
+      },
+      {
+        "name": "Voice API",
+        "description": "Voice over Internet Protocol is a methodology and group of technologies for the delivery of voice communications and multimedia sessions over Internet Protocol (IP) networks, such as the Internet. The terms Internet telephony, broadband telephony, and broadband phone service specifically refer to the provisioning of communications services (voice, fax, SMS, voice-messaging) over the public Internet.",
+        "X-3scale":{
+          "service_id":12345,
+          "swagger_system_name":"echo"
+        },
+        "image": "https://enterprisedemo.3scale.net/images/circle1.png",
+        "humanURL": "https://worldcompany.com/",
+        "baseURL": "http://voice.worldcompany.com",
+        "tags": [
+          "voice",
+          "VoIP",
+          "Telephony",
+          "phone"
+        ],
+        "properties": [
+          {
+            "type": "X-signup",
+            "url": "https://worldcompany.com"
+          },
+          {
+            "type": "Swagger",
+            "url": "https://worldcompany.com/swagger/spec/sms2_0.json"
+          }
+        ],
+        "contact": [
+          {
+            "FN": "World Company",
+            "email": "info@worldcompany.com",
+            "X-twitter": "worldcompany"
+          }
+        ]
+      },
+      {
+        "name": "Members Registration API v1",
+        "description": "A restul API that can be used to manage your customer services in the cloud. The service can be used to store, retrieve, search, update and delete members addresses. THIS VERSION IS MARKED FOR DEPRECATION.",
+        "X-3scale":{
+          "service_id": 5,
+          "swagger_system_name": "members_api"
+        },
+        "image": "https://enterprisedemo.3scale.net/images/circle1.png",
+        "humanURL": "https://worldcompany.com/",
+        "baseURL": "http://voice.worldcompany.com",
+        "tags": [
+          "v1",
+          "customer",
+          "crm",
+          "commerce",
+          "registrations",
+          "deprecated"
+        ],
+        "properties": [
+          {
+            "type": "X-signup",
+            "url": "https://worldcompany.com"
+          },
+          {
+            "type": "Swagger",
+            "url": "https://worldcompany.com/swagger/spec/sms2_0.json"
+          }
+        ],
+        "contact": [
+          {
+            "FN": "World Company",
+            "email": "info@worldcompany.com",
+            "X-twitter": "worldcompany"
+          }
+        ]
+      },
+      {
+        "name": "Members Registration API v2",
+        "description": "A restul API that can be used to manage your customer services in the cloud. The service can be used to store, retrieve, search, update and delete members addresses. This is the second version of the API. Following feed back, this version now includes first name and last name as seperate properties. Please see the technical documentation for details",
+        "X-3scale":{
+          "service_id": 500,
+          "swagger_system_name": "members_api_v2"
+        },
+        "image": "https://enterprisedemo.3scale.net/images/circle1.png",
+        "humanURL": "https://worldcompany.com/",
+        "baseURL": "http://voice.worldcompany.com",
+        "tags": [
+          "v2",
+          "customer",
+          "crm",
+          "commerce",
+          "registrations"
+        ],
+        "properties": [
+          {
+            "type": "X-signup",
+            "url": "https://worldcompany.com"
+          },
+          {
+            "type": "Swagger",
+            "url": "https://worldcompany.com/swagger/spec/sms2_0.json"
+          }
+        ],
+        "contact": [
+          {
+            "FN": "World Company",
+            "email": "info@worldcompany.com",
+            "X-twitter": "worldcompany"
+          }
+        ]
+      },
+      {
+        "name": "Members Registration API with OAuth",
+        "description": "A restul API that can be used to manage your customer services in the cloud. The service can be used to store, retrieve, search, update and delete members addresses. This API using OAuth to provide additional security by authenticating the userw with Red Hat SSO",
+        "X-3scale":{
+          "service_id": 6,
+          "swagger_system_name": "members_api"
+        },
+        "image": "https://enterprisedemo.3scale.net/images/circle1.png",
+        "humanURL": "https://worldcompany.com/",
+        "baseURL": "http://voice.worldcompany.com",
+        "tags": [
+          "customer",
+          "crm",
+          "commerce",
+          "registrations",
+          "oauth"
+        ],
+        "properties": [
+          {
+            "type": "X-signup",
+            "url": "https://worldcompany.com"
+          },
+          {
+            "type": "Swagger",
+            "url": "https://worldcompany.com/swagger/spec/sms2_0.json"
+          }
+        ],
+        "contact": [
+          {
+            "FN": "World Company",
+            "email": "info@worldcompany.com",
+            "X-twitter": "worldcompany"
+          }
+        ]
+      }
+    ],
+    "include": [],
+    "maintainers": [
+      {
+        "FN": "Red Hat",
+        "email": "phil.prosser@redhat.com",
+        "X-twitter": "redhat"
+      }
+    ]
+  }

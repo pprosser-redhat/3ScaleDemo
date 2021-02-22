@@ -1,0 +1,214 @@
+---
+- name: Remove remote demo instance from 3Scale cli before defining to new cluster
+  shell: 3scale remote remove demo
+  ignore_errors: yes
+
+- name: Add remote 3Scale instance to 3Scale Toolbox
+  shell: 3scale remote add demo "https://{{ tenanttoken }}@{{ api_tenant }}-admin.{{ wildcarddomain }}"
+  ignore_errors: yes
+
+- name: Add the wildcard domain to the OpenAPI Docs
+  template:
+    src: '{{ role_path }}/files/{{ api }}.j2'
+    dest: /tmp/{{ api }}.yaml
+
+- name: Import the members API OpenAPI Doc
+  shell: 3scale import openapi -d "https://{{ tenanttoken }}@{{ api_tenant }}-admin.{{ wildcarddomain }}" "/tmp/{{ api }}.yaml"
+
+- name: Find all Services available on 3Scale
+  uri:
+    validate_certs: no
+    body_format: raw
+    method: GET
+    url: "https://{{ api_tenant }}-admin.{{ wildcarddomain }}/admin/api/services.json?access_token={{ tenanttoken }}"
+  register: serviceslist
+
+- name: Get the ID array for the Members Registration Service
+  set_fact:
+    serviceidarray: "{{ serviceslist | json_query(serviceidquery)}}"
+  vars:
+    serviceidquery: "json.services[?(@.service.name=='Members Registration API')].service.id"
+  when: (api == "membersregistration_spec")
+
+- name: Get the ID array for the Members Registration Service OAuth Service
+  set_fact:
+    serviceidarray: "{{ serviceslist | json_query(serviceidquery)}}"
+  vars:
+    serviceidquery: "json.services[?(@.service.name=='Members Registration API Oauth')].service.id"
+  when: (api == "membersregistration_spec_oauth")
+
+- name: Remove [ from the variable so it can be used as the serviceid slowly - There is a better way
+  set_fact:
+    serviceidalmost: "{{ serviceidarray | regex_replace('^[\\[]')}}"
+
+- name: Remove ] from the variable so it can be used as the serviceid slowly - There is a better way - just running out of timme 
+  set_fact:
+    serviceid: "{{ serviceidalmost | regex_replace('[\\]]$')}}"
+
+- name: Add version metrics to the Members API
+  uri:
+    validate_certs: no
+    method: POST
+    url: "https://{{ api_tenant }}-admin.{{ wildcarddomain }}/admin/api/services/{{ serviceid }}/metrics.json"
+    status_code: 201,422
+    body_format: form-urlencoded
+    body:
+      access_token: "{{ tenanttoken }}"
+      friendly_name: "{{ item.version }}"
+      system_name: "{{ item.version }}"
+      unit: "count"
+      description: "Count of calls to the {{ item.version }} API"
+  register: "metricid_ids"
+  loop:
+      - { version: 'v1'}
+      - { version: 'v2'}
+
+- name: Add version mappings for new metrics in the Members API
+  uri:
+    validate_certs: no
+    method: POST
+    url: "https://{{ api_tenant }}-admin.{{ wildcarddomain }}/admin/api/services/{{ serviceid }}/proxy/mapping_rules.json"
+    status_code: 201,422
+    body_format: form-urlencoded
+    body:
+      access_token: "{{ tenanttoken }}"
+      http_method: "{{ item[1] }}"
+      pattern: "/{{ item[0].json.metric.name }}"
+      delta: "1"
+      metric_id: "{{ item[0].json.metric.id }}"
+  ignore_errors: yes
+  with_nested: 
+    - "{{ metricid_ids.results }}"
+    - ['GET', 'POST', 'DELETE']
+  loop_control:
+    extended: yes
+
+- name: Add V2 Backend to 3Scale
+  uri:
+    validate_certs: no
+    method: POST
+    url: "https://{{ api_tenant }}-admin.{{ wildcarddomain }}/admin/api/backend_apis.json"
+    status_code: 201,422
+    body_format: form-urlencoded
+    body:
+      access_token: "{{ tenanttoken }}"
+      name: "Backend of Members Registration API v2"
+      system_name: "membersapp_v2"
+      description: "Version 2 of the Members API"
+      private_endpoint: "http://membersdemov2-membersapp.{{ wildcarddomain }}"
+  ignore_errors: yes
+  register: new_backend_response
+
+- name: Get V2 backend Id
+  set_fact:
+    newbackend_id: "{{ new_backend_response.json.backend_api.id }}"
+  ignore_errors: yes\
+
+- name: Add V2 Backend to Members Product API
+  uri:
+    validate_certs: no
+    method: POST
+    url: "https://{{ api_tenant }}-admin.{{ wildcarddomain }}/admin/api/services/{{ serviceid }}/backend_usages.json"
+    status_code: 201,422
+    body_format: form-urlencoded
+    body:
+      access_token: "{{ tenanttoken }}"
+      backend_api_id: "{{ newbackend_id }}"
+      path: "v2"  
+  ignore_errors: yes
+
+- name: Find backend end for the API to add path based routing
+  uri:
+    validate_certs: no
+    method: GET
+    url: "https://{{ api_tenant }}-admin.{{ wildcarddomain }}/admin/api/services/{{ serviceid }}/backend_usages.json?access_token={{ tenanttoken }}"
+    body_format: json
+  ignore_errors: yes
+  register: "backend_apis"
+
+- name: Get V1 backend usage Id
+  set_fact:
+    v1_backend_usage_id: "{{ backend_apis.json[0].backend_usage.id }}"
+  ignore_errors: yes
+
+- name: Update the first backend to have v1 in the path 
+  uri:
+    validate_certs: no
+    method: PUT
+    url: "https://{{ api_tenant }}-admin.{{ wildcarddomain }}/admin/api/services/{{ serviceid }}/backend_usages/{{ v1_backend_usage_id }}.json"
+    status_code: 200
+    body_format: form-urlencoded
+    body:
+      access_token: "{{ tenanttoken }}"
+      path: "/v1"  
+  ignore_errors: yes
+
+- name: Change the OAuth service to OIDC type Authentication 
+  uri:
+    validate_certs: no
+    method: PUT
+    url: "https://{{ api_tenant }}-admin.{{ wildcarddomain }}/admin/api/services/{{ serviceid }}.json"
+    status_code: 200
+    body_format: form-urlencoded
+    body:
+      access_token: "{{ tenanttoken }}"
+      backend_version: "oidc"
+  ignore_errors: yes
+  when: (api == "membersregistration_spec_oauth")
+
+- name: Update the Oauth APi with details of SSO 
+  uri:
+    validate_certs: no
+    method: PATCH
+    url: "https://{{ api_tenant }}-admin.{{ wildcarddomain }}/admin/api/services/{{ serviceid }}/proxy.json"
+    status_code: 200
+    body_format: form-urlencoded
+    body:
+      access_token: "{{ tenanttoken }}"
+      oidc_issuer_endpoint: "http://3scale-admin:3scale-admin-secret@sso-sso-clear.{{ wildcarddomain }}/auth/realms/3scale"
+      oidc_issuer_type: "keycloak"
+      jwt_claim_with_client_id: "azp"
+      jwt_claim_with_client_id_type: "plain"
+  ignore_errors: yes
+  when: (api == "membersregistration_spec_oauth")
+
+- name: Deploy API to Staging Gateway  
+  uri:
+    validate_certs: no
+    method: POST
+    url: "https://{{ api_tenant }}-admin.{{ wildcarddomain }}/admin/api/services/{{ serviceid }}/proxy/deploy.json"
+    status_code: 201,422
+    body_format: form-urlencoded
+    body:
+      access_token: "{{ tenanttoken }}"
+  ignore_errors: yes
+
+- name: Get latest vesion deployed to staging gateway
+  uri:
+    validate_certs: no
+    method: GET
+    url: "https://{{ api_tenant }}-admin.{{ wildcarddomain }}/admin/api/services/{{ serviceid }}/proxy/configs/sandbox/latest.json?access_token={{ tenanttoken }}"
+    body_format: json
+  ignore_errors: yes
+  register: "lastest_version_doc"
+
+- name: Get the latest version number
+  set_fact:
+    version_id: "{{ lastest_version_doc.json.proxy_config.version }}"
+  ignore_errors: yes
+
+- name: Promote to Production Gateway 
+  uri:
+    validate_certs: no
+    method: POST
+    url: "https://{{ api_tenant }}-admin.{{ wildcarddomain }}/admin/api/services/{{ serviceid }}/proxy/configs/sandbox/{{ version_id }}/promote.json"
+    status_code: 201,422
+    body_format: form-urlencoded
+    body:
+      access_token: "{{ tenanttoken }}"
+      to: "production"
+  ignore_errors: yes
+
+- name: Process Applications Plans
+  include_tasks: process_application_plans.yml
+  ignore_errors: yes

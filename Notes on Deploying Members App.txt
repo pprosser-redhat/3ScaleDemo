@@ -1,0 +1,1 @@
+mvn clean package -Dnative -Dquarkus.kubernetes.deploy=true -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=registry.access.redhat.com/quarkus/mandrel-20-rhel8:20.1 -DskipTests

@@ -1,0 +1,4 @@
+ Add to 2 lines below next to documentation       
+        
+        <li><a class="{% if urls.docs.active? %}active{% endif %}" href="/apilist">API Search</a></li>
+        <li><a class="{% if urls.docs.active? %}active{% endif %}" href="/members">Members API</a></li>

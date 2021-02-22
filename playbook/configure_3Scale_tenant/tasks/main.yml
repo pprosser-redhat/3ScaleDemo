@@ -16,21 +16,6 @@
       stringData:
         admin_password: "{{ ADMIN_PASSWORD }}"
 
-- name: Define tenant admin password
-  k8s:
-    api_key: "{{ ocp_login_token }}"
-    host: "{{ ocp_url }}"
-    validate_certs: no
-    state: present
-    definition:
-      kind: Secret
-      apiVersion: v1
-      metadata:
-        name: red-hat-tenant-admin-secret
-        namespace: amp
-      stringData:
-        admin_password: "{{ ADMIN_PASSWORD }}"
-
 - name: Define 3Scale tenant
   k8s:
     api_key: "{{ ocp_login_token }}"
@@ -58,14 +43,6 @@
           namespace: amp
         username: admin
 
-- name: create zync client secret in RH SSO
-  k8s:
-    api_key: "{{ ocp_login_token }}"
-    host: "{{ ocp_url }}"
-    validate_certs: no
-    state: present
-    src: "{{ role_path }}/files/zync3scaleclient.yml"
-
 - name: 3scaletoken
   pause:
     prompt: "Please access the 3Scale admin portal here https://red-hat-admin.{{ wildcarddomain }} and create a token. Once created, paste it here"
@@ -74,3 +51,40 @@
 
 - set_fact:
     tenanttoken: "{{ userinput.user_input }}"
+
+- name: Add Oauth Authentication Provider for Admin in Tenant
+  uri:
+    validate_certs: no
+    method: POST
+    url: "https://{{ api_tenant }}-admin.{{ wildcarddomain }}/admin/api/account/authentication_providers.xml"
+    status_code: 201
+    body_format: form-urlencoded
+    body:
+      access_token: "{{ tenanttoken }}"
+      kind: keycloak
+      name: rhssoprovider
+      client_id: 3scaleadminportal
+      client_secret: 3scaleadminportal-secret
+      site: "https://keycloak-sso.{{ wildcarddomain }}/auth/realms/3scale"
+      skip_ssl_certificate_verification: true
+      published: true
+  ignore_errors: yes
+
+
+- name: Add Oauth Authentication Provider for Developer Portal in Tenant
+  uri:
+    validate_certs: no
+    method: POST
+    url: "https://{{ api_tenant }}-admin.{{ wildcarddomain }}/admin/api/authentication_providers.xml"
+    status_code: 201
+    body_format: form-urlencoded
+    body:
+      access_token: "{{ tenanttoken }}"
+      kind: keycloak
+      name: rhssoproviderdevportal
+      client_id: 3scaleadminportal
+      client_secret: 3scaleadminportal-secret
+      site: "https://keycloak-sso.{{ wildcarddomain }}/auth/realms/3scale"
+      skip_ssl_certificate_verification: true
+      published: true
+  ignore_errors: yes

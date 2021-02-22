@@ -1,5 +1,17 @@
 ---
 # tasks file for configure_sso
+- name: Add the password to the sso 3scale password secret
+  template:
+    src: "{{ role_path }}/files/3scale-realm-secret.j2"
+    dest: /tmp/3scale-realm-secret.yaml
+
+# - name: Deploy 3scale sso secret
+#  k8s:
+#    api_key: "{{ ocp_login_token }}"
+#    host: "{{ ocp_url }}"
+#    validate_certs: no
+#    state: present
+#    src: /tmp/3scale-realm-secret.yaml
 
 - name: Deploy 3Scale Realm
   k8s:
@@ -14,8 +26,7 @@
   register: ssooperator
   until: ssooperator.stdout.find("true") != -1
   retries: 200
-
-
+  
 - name: Create users
   k8s:
     api_key: "{{ ocp_login_token }}"
@@ -69,13 +80,18 @@
     state: present
     src: "{{ role_path }}/files/3scale-admin.yml"
 
+- name: Add the wildcard domain and tenant details to secret
+  template:
+    src: "{{ role_path }}/files/3scaleadminportal.j2"
+    dest: /tmp/3scaleadminportal.yaml
+
 - name: create 3scaleadminportal client in RH SSO, used for Admina and Dev Portal SSO
   k8s:
     api_key: "{{ ocp_login_token }}"
     host: "{{ ocp_url }}"
     validate_certs: no
     state: present
-    src: "{{ role_path }}/files/3scaleadminportal.yml"
+    src: "/tmp/3scaleadminportal.yaml"
 
 - name: Create clear sso sso service to avoid self signed cert problems
   k8s:
@@ -120,5 +136,3 @@
         port:
           targetPort: keycloak
         wildcardPolicy: None
-
-    

@@ -1,0 +1,161 @@
+openapi: 3.0.3
+info:
+    title: Members Registration API Oauth
+    version: '1.0'
+servers:
+    -
+        url: 'http://membersdemov1-membersapp.{{ wildcarddomain }}'
+        description: Version 1
+paths:
+    '/{version}/membersweb/rest/members':
+        get:
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListMember'
+                    description: OK
+            security:
+                -
+                    membersapikey: []
+            operationId: allMembers
+        post:
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Member'
+            responses:
+                '200':
+                    description: OK
+        parameters:
+            -
+                name: version
+                schema:
+                    type: string
+                in: path
+                required: true
+    '/{version}/membersweb/rest/members/hello':
+        get:
+            responses:
+                '200':
+                    content:
+                        text/plain:
+                            schema:
+                                type: string
+                    description: OK
+            security:
+                -
+                    membersapikey: []
+            operationId: sayHello
+        parameters:
+            -
+                name: version
+                schema:
+                    type: string
+                in: path
+                required: true
+    '/{version}/membersweb/rest/members/{email}':
+        delete:
+            parameters:
+                -
+                    name: email
+                    schema:
+                        type: string
+                    in: path
+                    required: true
+            responses:
+                '200':
+                    description: OK
+            security:
+                -
+                    membersapikey: []
+            operationId: deletemembersbyemail
+        parameters:
+            -
+                name: version
+                schema:
+                    type: string
+                in: path
+                required: true
+            -
+                name: email
+                schema:
+                    type: string
+                in: path
+                required: true
+    '/{version}/membersweb/rest/members/{id}':
+        get:
+            parameters:
+                -
+                    name: id
+                    schema:
+                        format: int64
+                        type: integer
+                    in: path
+                    required: true
+            responses:
+                '200':
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Member'
+                    description: OK
+            security:
+                -
+                    membersapikey: []
+            operationId: getmemberbyid
+        parameters:
+            -
+                name: version
+                schema:
+                    type: string
+                in: path
+                required: true
+            -
+                name: id
+                schema:
+                    format: int64
+                    type: integer
+                in: path
+                required: true
+components:
+    schemas:
+        Member:
+            required:
+                - email
+                - name
+                - phoneNumber
+            type: object
+            properties:
+                email:
+                    nullable: false
+                    type: string
+                id:
+                    format: int64
+                    type: integer
+                name:
+                    nullable: false
+                    maxLength: 25
+                    minLength: 1
+                    type: string
+                phoneNumber:
+                    nullable: false
+                    maxLength: 12
+                    minLength: 10
+                    pattern: '^\d{1,12}$'
+                    type: string
+        ListMember:
+            type: array
+            items:
+                $ref: '#/components/schemas/Member'
+    securitySchemes:
+        membersapikey:
+            type: apiKey
+            description: apikey
+            name: user-key
+            in: header
+security:
+    -
+        membersapikey: []

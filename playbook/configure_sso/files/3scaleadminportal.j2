@@ -12,9 +12,9 @@ spec:
     directAccessGrantsEnabled: false
     publicClient: false
     redirectUris:
-      - "https://{{ 3scale_tenant }}-admin.{{ wildcarddomain }}/*"
-      - "https://{{ 3scale_tenant }}.{{ wildcarddomain }}/*"
-    rootUrl: "https://{{ 3scale_tenant }}-admin.{{ wildcarddomain }}"
+      - "https://{{ api_tenant }}-admin.{{ wildcarddomain }}/*"
+      - "https://{{ api_tenant }}.{{ wildcarddomain }}/*"
+    rootUrl: "https://{{ api_tenant }}-admin.{{ wildcarddomain }}"
     standardFlowEnabled: true
   realmSelector:
     matchLabels:
