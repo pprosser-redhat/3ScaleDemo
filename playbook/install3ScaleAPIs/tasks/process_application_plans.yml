@@ -9,7 +9,7 @@
     body:
       access_token: "{{ tenanttoken }}"
       name: "{{ item[0] }} Members Plans V{{ item[1] }}"
-      approval_required: true
+      approval_required: false
       cost_per_month: 10
       setup_fee: 25
       trial_period_days: 10
