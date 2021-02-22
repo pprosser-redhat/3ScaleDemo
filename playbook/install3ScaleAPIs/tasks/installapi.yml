@@ -4,7 +4,7 @@
   ignore_errors: yes
 
 - name: Add remote 3Scale instance to 3Scale Toolbox
-  shell: 3scale remote add demo "https://{{ tenanttoken }}@{{ api_tenant }}-admin.{{ wildcarddomain }}"
+  shell: 3scale --insecure remote add demo "https://{{ tenanttoken }}@{{ api_tenant }}-admin.{{ wildcarddomain }}" 
   ignore_errors: yes
 
 - name: Add the wildcard domain to the OpenAPI Docs
@@ -13,7 +13,7 @@
     dest: /tmp/{{ api }}.yaml
 
 - name: Import the members API OpenAPI Doc
-  shell: 3scale import openapi -d "https://{{ tenanttoken }}@{{ api_tenant }}-admin.{{ wildcarddomain }}" "/tmp/{{ api }}.yaml"
+  shell: 3scale --insecure import openapi -d "https://{{ tenanttoken }}@{{ api_tenant }}-admin.{{ wildcarddomain }}" "/tmp/{{ api }}.yaml"
 
 - name: Find all Services available on 3Scale
   uri:
