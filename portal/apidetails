@@ -5,7 +5,12 @@
 # Advanced - Content type: text/html
 # Advanced - Liquid enabled: true
 
-{% active_docs version: "2.0" %}
+{% active_docs version: "3.0" %}
+
+{% content_for javascripts %}
+    {{ 'active_docs.js' | javascript_include_tag }}
+{% endcontent_for %}
+
 <div id="content"></div>
 
 <style media="screen">
@@ -45,7 +50,11 @@
 {% raw %}
   <div id="documentation">
     <h2>Documentation</h2>
-      <p id="swagger-ui-containers"></p>
+    	<div class="swagger-section">
+  			<div id="message-bar" class="swagger-ui-wrap">&nbsp;</div>
+  			<div id="swagger-ui-container" class="swagger-ui-wrap"></div>
+		</div>
+  <!--    <p id="swagger-ui-containers"></p>-->
   </div>
 {% endraw %}
 </script>
@@ -175,7 +184,9 @@
 
 		var specSystemName = API[0]['X-3scale']['swagger_system_name'];
       	var domId = "swagger-ui-container-" + specSystemName;
-      	loadSwagger(specSystemName, domId);
+      	//loadSwagger(specSystemName, domId);
+        var url = getSwaggerSpecUrl(specSystemName);
+        SwaggerUI({ url: url, dom_id: "#swagger-ui-container" }, "https://members-registration-api-red-hat-apicast-production.apps.coffee.demolab.local:443");
       }
      });
 
@@ -229,6 +240,10 @@
         return ApiDocsProxy.execute(httpClient, obj);
       }
     });
+    
+ 
+    
+    
     window[swaggerObjName] = swaggerObj;
     window[swaggerObjName].load();
   }
