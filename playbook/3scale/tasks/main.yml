@@ -48,10 +48,10 @@
     src: "{{ role_path }}/files/3scaleoperator.yml"
 
 - name: Get the version of the 3Scale operator being deployed
-  shell: oc get deployment 3scale-operator -n amp -o jsonpath="{..ownerReferences[0].name}"
+  shell: oc get deployment threescale-operator-controller-manager-v2 -n amp -o jsonpath="{..ownerReferences[0].name}"
   register: ampoperatorclusterversion
   until: ampoperatorclusterversion is not failed
-  retries: 20
+  retries: 100
 
 - name: Wait for the 3Scale Operator to start
   shell: oc get csv {{ ampoperatorclusterversion.stdout }} -n amp -o jsonpath="{.status.reason}"

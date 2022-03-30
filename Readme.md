@@ -23,3 +23,8 @@ Need to make a manual adjustmment to the 3scale realm setting in SSO
     click on realm settings and change "Require SSL" to none - this is highly not recommended, and is for a demo only
 
 If you want to show the dev portal then manually add the pages required
+
+
+Account not approved error message from sso, need to make sure the emailed_verified etc is added as a mapping to the client.
+
+if zync isn't syncing client id's might need to generate a new client for zync to use
