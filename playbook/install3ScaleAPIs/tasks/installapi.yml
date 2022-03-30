@@ -102,7 +102,7 @@
 - name: Get V2 backend Id
   set_fact:
     newbackend_id: "{{ new_backend_response.json.backend_api.id }}"
-  ignore_errors: yes\
+  ignore_errors: yes
 
 - name: Add V2 Backend to Members Product API
   uri:
