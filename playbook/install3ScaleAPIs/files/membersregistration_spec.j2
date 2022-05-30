@@ -1,7 +1,15 @@
 openapi: 3.0.3
 info:
-    title: Members Registration API
-    version: '1.0'
+    title: Customer Management API
+    version: 1.0.0
+    description: This API allows you to manage customers in the Saas Service
+    contact:
+        name: Phil Prosser
+        url: 'https://www.redhat.com'
+        email: pprosser@redhat.com
+    license:
+        name: Apache 2.0
+        url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 servers:
     -
         url: 'http://membersdemov1-membersapp.{{ wildcarddomain }}'
@@ -9,58 +17,16 @@ servers:
 paths:
     '/{version}/membersweb/rest/members':
         get:
-            responses:
-                '200':
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/ListMember'
-                    description: OK
-            security:
-                -
-                    membersapikey: []
-            operationId: allMembers
-        post:
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/Member'
-            responses:
-                '200':
-                    description: OK
-        parameters:
-            -
-                name: version
-                schema:
-                    type: string
-                in: path
-                required: true
-    '/{version}/membersweb/rest/members/hello':
-        get:
-            responses:
-                '200':
-                    content:
-                        text/plain:
-                            schema:
-                                type: string
-                    description: OK
-            security:
-                -
-                    membersapikey: []
-            operationId: sayHello
-        parameters:
-            -
-                name: version
-                schema:
-                    type: string
-                in: path
-                required: true
-    '/{version}/membersweb/rest/members/{email}':
-        delete:
+            tags:
+                - list
             parameters:
                 -
-                    name: email
+                    examples:
+                        v1:
+                            value: v1
+                        v2:
+                            value: v2
+                    name: version
                     schema:
                         type: string
                     in: path
@@ -70,29 +36,141 @@ paths:
                     description: OK
             security:
                 -
-                    membersapikey: []
-            operationId: deletemembersbyemail
+                    apikey: []
+            operationId: listAllMembers
+            summary: list all members
+        post:
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Member'
+            tags:
+                - Customer Maintenance
+            responses:
+                '200':
+                    description: OK
+            security:
+                -
+                    apikey: []
+            operationId: createMember
+            summary: Create new member
         parameters:
             -
+                examples:
+                    v1:
+                        value: v1
+                    v2:
+                        value: v2
                 name: version
                 schema:
                     type: string
                 in: path
                 required: true
+    '/{version}/membersweb/rest/members/hello':
+        get:
+            tags:
+                - test
+            parameters:
+                -
+                    examples:
+                        v1:
+                            value: v1
+                        v2:
+                            value: v2
+                    name: version
+                    schema:
+                        type: string
+                    in: path
+                    required: true
+            responses:
+                '200':
+                    content:
+                        text/plain:
+                            schema:
+                                type: string
+                    description: OK
+            security:
+                -
+                    apikey: []
+            operationId: hello
+            summary: Say Hello!
+        parameters:
+            -
+                examples:
+                    v1:
+                        value: v1
+                    v2:
+                        value: v2
+                name: version
+                schema:
+                    type: string
+                in: path
+                required: true
+    '/{version}/membersweb/rest/members/{email}':
+        delete:
+            tags:
+                - Customer Maintenance
+            parameters:
+                -
+                    name: email
+                    schema:
+                        type: string
+                    in: path
+                    required: true
+                -
+                    examples:
+                        v1:
+                            value: v1
+                        v2:
+                            value: v2
+                    name: version
+                    schema:
+                        type: string
+                    in: path
+                    required: true
+            responses:
+                '200':
+                    description: OK
+            security:
+                -
+                    apikey: []
+            operationId: deleteMember
+            summary: Delete a member
+        parameters:
             -
                 name: email
                 schema:
                     type: string
                 in: path
                 required: true
+            -
+                examples:
+                    v1:
+                        value: v1
+                    v2:
+                        value: v2
+                name: version
+                schema:
+                    type: string
+                in: path
+                required: true
     '/{version}/membersweb/rest/members/{id}':
         get:
+            tags:
+                - list
             parameters:
                 -
                     name: id
                     schema:
                         format: int64
                         type: integer
+                    in: path
+                    required: true
+                -
+                    name: version
+                    schema:
+                        type: string
                     in: path
                     required: true
             responses:
@@ -104,15 +182,10 @@ paths:
                     description: OK
             security:
                 -
-                    membersapikey: []
-            operationId: getmemberbyid
+                    apikey: []
+            operationId: lookupMemberById
+            summary: List Member by Member ID
         parameters:
-            -
-                name: version
-                schema:
-                    type: string
-                in: path
-                required: true
             -
                 name: id
                 schema:
@@ -120,25 +193,37 @@ paths:
                     type: integer
                 in: path
                 required: true
+            -
+                name: version
+                schema:
+                    type: string
+                in: path
+                required: true
 components:
     schemas:
         Member:
             required:
                 - email
-                - name
                 - phoneNumber
             type: object
             properties:
-                email:
-                    nullable: false
-                    type: string
                 id:
                     format: int64
                     type: integer
                 name:
-                    nullable: false
+                    type: string
+                firstName:
                     maxLength: 25
                     minLength: 1
+                    type: string
+                lastName:
+                    maxLength: 25
+                    minLength: 1
+                    type: string
+                listNames:
+                    $ref: '#/components/schemas/StringJoiner'
+                email:
+                    nullable: false
                     type: string
                 phoneNumber:
                     nullable: false
@@ -146,16 +231,40 @@ components:
                     minLength: 10
                     pattern: '^\d{1,12}$'
                     type: string
-        ListMember:
-            type: array
-            items:
-                $ref: '#/components/schemas/Member'
+        StringJoiner:
+            type: object
+            properties:
+                prefix:
+                    type: string
+                delimiter:
+                    type: string
+                suffix:
+                    type: string
+                elts:
+                    type: array
+                    items:
+                        type: string
+                size:
+                    format: int32
+                    type: integer
+                len:
+                    format: int32
+                    type: integer
+                emptyValue:
+                    type: string
     securitySchemes:
-        membersapikey:
+        apikey:
             type: apiKey
-            description: apikey
+            description: Authentication required to use the customer API
             name: user-key
             in: header
-security:
+tags:
     -
-        membersapikey: []
+        name: Customer Maintenance
+        description: Customer Management
+    -
+        name: list
+        description: Query Members
+    -
+        name: test
+        description: Test the API
