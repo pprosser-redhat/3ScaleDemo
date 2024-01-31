@@ -1,3 +1,12 @@
 mvn clean package -Dnative -Dquarkus.kubernetes.deploy=true -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=registry.redhat.io/quarkus/mandrel-20-rhel8 -DskipTests
 
 registry.redhat.io/quarkus/mandrel-20-rhel8
+
+mvn clean package -Dnative -Dquarkus.kubernetes.deploy=true -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=registry.access.redhat.com/quarkus/mandrel-22-rhel8:22.3 -DskipTests
+
+
+easier to use the quarkus cli 
+
+```
+quarkus build -Dquarkus.kubernetes.deploy=true
+```

@@ -43,6 +43,10 @@
           namespace: amp
         username: admin
 
+#- name: Get the tenant token 
+#  set_fact:
+#    tenanttoken: "{{ query('kubernetes.core.k8s', kind='Secret', namespace='amp', resource_name='red-hat-tenant') | community.general.json_query('[0].data.token') | b64decode }}"
+
 - name: 3scaletoken
   pause:
     prompt: "Please access the 3Scale admin portal here https://red-hat-admin.{{ wildcarddomain }} and create a token. Once created, paste it here"
@@ -69,7 +73,6 @@
       skip_ssl_certificate_verification: true
       published: true
   ignore_errors: yes
-
 
 - name: Add Oauth Authentication Provider for Developer Portal in Tenant
   uri:

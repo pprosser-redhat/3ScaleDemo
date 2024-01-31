@@ -28,3 +28,7 @@ If you want to show the dev portal then manually add the pages required
 Account not approved error message from sso, need to make sure the emailed_verified etc is added as a mapping to the client.
 
 if zync isn't syncing client id's might need to generate a new client for zync to use
+
+how to get openapi doc from apicurio
+
+ http://example-apicurioregistry-mem.registry.router-default.apps.cluster-skvj7.dynamic.redhatworkshops.io/apis/registry/v2/groups/philorg/artifacts/customerapi/versions/1
