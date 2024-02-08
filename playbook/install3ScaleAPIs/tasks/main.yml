@@ -1,9 +1,840 @@
 ---
-- name: Create the APIs
-  include_tasks: installapi.yml
-  loop:
-    - membersregistration_spec
-    - membersregistration_spec_oauth
-  loop_control:
-    loop_var: api
-  ignore_errors: yes
+
+#- name: Add the wildcard domain to the OpenAPI Docs
+#  template:
+#    src: '{{ role_path }}/files/{{ api }}.j2'
+#    dest: /tmp/{{ api }}.yaml
+
+- name: Add v2 customer management API
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    definition:
+      apiVersion: capabilities.3scale.net/v1beta1
+      kind: Backend
+      metadata:
+        name: customer-management-api-v2
+        namespace: amp
+      spec:
+        providerAccountRef:
+          name: red-hat-tenant
+        name: customer-management-api-v2
+        privateBaseURL: 'http://membersdemov2.membersapp.svc.cluster.local:80'
+        systemName: customer-management-api-v2
+        description: Customer Management API Backend v2
+
+- name: Add v1 customer management API
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    definition:
+      apiVersion: capabilities.3scale.net/v1beta1
+      kind: Backend
+      metadata:
+        name: 'customer-management-api-v1'
+        namespace: amp
+      spec:
+        providerAccountRef:
+          name: red-hat-tenant
+        name: customer_management-api-v1
+        privateBaseURL: 'http://membersdemov1.membersapp.svc.cluster.local:80'
+        systemName: customer-management-api-v1
+        description: Customer Management API Backend v1
+
+- name: Add customer management API product API
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    definition:
+      apiVersion: capabilities.3scale.net/v1beta1
+      kind: Product
+      metadata:
+        namespace: amp
+        name: customer-management-api
+      spec:
+        metrics:
+          hits:
+            description: Number of API hits
+            friendlyName: Hits
+            unit: hit
+          v1:
+            description: Count of calls to the v1 API
+            friendlyName: v1
+            unit: count
+          v2:
+            description: Count of calls to the v2 API
+            friendlyName: v2
+            unit: count
+        deployment:
+          apicastHosted:
+            authentication:
+              userkey:
+                authUserKey: user-key
+                credentials: headers
+        backendUsages:
+          customer-management-api-v1:
+            path: /v1
+          customer-management-api-v2:
+            path: /v2
+        mappingRules:
+          - httpMethod: GET
+            increment: 1
+            metricMethodRef: listAllMembers
+            pattern: '/{version}/membersweb/rest/members$'
+          - httpMethod: POST
+            increment: 1
+            metricMethodRef: createMember
+            pattern: '/{version}/membersweb/rest/members$'
+          - httpMethod: GET
+            increment: 1
+            metricMethodRef: hello
+            pattern: '/{version}/membersweb/rest/members/hello$'
+          - httpMethod: DELETE
+            increment: 1
+            metricMethodRef: deleteMember
+            pattern: '/{version}/membersweb/rest/members/{email}$'
+          - httpMethod: GET
+            increment: 1
+            metricMethodRef: lookupMemberById
+            pattern: '/{version}/membersweb/rest/members/{id}$'
+          - httpMethod: POST
+            increment: 1
+            metricMethodRef: v1
+            pattern: /v1
+          - httpMethod: DELETE
+            increment: 1
+            metricMethodRef: v1
+            pattern: /v1
+          - httpMethod: GET
+            increment: 1
+            metricMethodRef: v1
+            pattern: /v1
+          - httpMethod: POST
+            increment: 1
+            metricMethodRef: v2
+            pattern: /v2
+          - httpMethod: DELETE
+            increment: 1
+            metricMethodRef: v2
+            pattern: /v2
+          - httpMethod: GET
+            increment: 1
+            metricMethodRef: v2
+            pattern: /v2
+        name: Customer Management API
+        policies:
+          - name: cors
+            version: builtin
+            configuration:
+              allow_methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              allow_origin: "*"
+            enabled: true
+          - configuration: {}
+            configurationRef: {}
+            enabled: true
+            name: apicast
+            version: builtin
+        methods:
+          createMember:
+            description: Create Member
+            friendlyName: createMember
+          deleteMember:
+            description: Delete Member
+            friendlyName: delete member
+          hello:
+            description: Hello
+            friendlyName: hello
+          listAllMembers:
+            description: List all Members
+            friendlyName: list All Members
+          lookupMemberById:
+            description: lookup Member By Id
+            friendlyName: lookup Member By Id
+        providerAccountRef:
+          name: red-hat-tenant
+        systemName: Customer-Management-API
+        applicationPlans:
+          bronze-members-plans-v1:
+            appsRequireApproval: true
+            costMonth: '10'
+            limits:
+              - metricMethodRef:
+                  systemName: listAllMembers
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: createMember
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: hello
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: deleteMember
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: lookupMemberById
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: v1
+                period: day
+                value: 10000
+            pricingRules:
+              - metricMethodRef:
+                  systemName: listAllMembers
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: createMember
+                pricePerUnit: "0.50"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: deleteMember
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: lookupMemberById
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+            name: Bronze Members Plan V1
+            published: true
+            setupFee: '25'
+            trialPeriod: 10
+          bronze-members-plans-v2:
+            appsRequireApproval: true
+            costMonth: '10'
+            limits:
+              - metricMethodRef:
+                  systemName: listAllMembers
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: createMember
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: hello
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: deleteMember
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: lookupMemberById
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: v1
+                period: day
+                value: 10000
+            pricingRules:
+              - metricMethodRef:
+                  systemName: listAllMembers
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: createMember
+                pricePerUnit: "0.50"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: deleteMember
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: lookupMemberById
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+            name: Bronze Members Plan V2
+            published: true
+            setupFee: '25'
+            trialPeriod: 10
+          restricted-bronze-members-plans-v1:
+            appsRequireApproval: true
+            costMonth: '10'
+            limits:
+              - metricMethodRef:
+                  systemName: listAllMembers
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: createMember
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: hello
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: deleteMember
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: lookupMemberById
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: v1
+                period: day
+                value: 10000
+            pricingRules:
+              - metricMethodRef:
+                  systemName: listAllMembers
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: createMember
+                pricePerUnit: "0.50"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: deleteMember
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: lookupMemberById
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+            name: Restricted Bronze Members Plan V1
+            published: true
+            setupFee: '25'
+            trialPeriod: 10
+          restricted-bronze-members-plans-v2:
+            appsRequireApproval: true
+            costMonth: '10'
+            limits:
+              - metricMethodRef:
+                  systemName: listAllMembers
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: createMember
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: hello
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: deleteMember
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: lookupMemberById
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: v1
+                period: day
+                value: 10000
+            pricingRules:
+              - metricMethodRef:
+                  systemName: listAllMembers
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: createMember
+                pricePerUnit: "0.50"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: deleteMember
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: lookupMemberById
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+            name: RestrictedBronze Members Plan V2
+            published: true
+            setupFee: '25'
+            trialPeriod: 10
+        description: Customer Management API
+
+- name: Promote customer management API product API
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    definition:
+      apiVersion: capabilities.3scale.net/v1beta1
+      kind: ProxyConfigPromote
+      metadata:
+        name: promote-customer-management-api
+        namespace: amp
+      spec:
+        deleteCR: true
+        productCRName: customer-management-api
+        production: true
+
+- name: Add the V1 Activedoc to 3scale - user key auth
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    definition:
+      apiVersion: capabilities.3scale.net/v1beta1
+      kind: ActiveDoc
+      metadata:
+        name: customer-management-api-v1
+        namespace: amp
+      spec:
+        providerAccountRef:
+          name: red-hat-tenant
+        activeDocOpenAPIRef:
+          url: 'http://registry.registry.router-default.{{ wildcarddomain }}/apis/registry/v2/groups/philorg/artifacts/customerapi/versions/1'
+        skipSwaggerValidations: True
+        name: Customer Management API v1
+        published: true
+        description: Customer Management API
+        productSystemName: Customer-Management-API
+
+- name: Add the V2 Activedoc to 3scale - user key auth
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    definition:
+      apiVersion: capabilities.3scale.net/v1beta1
+      kind: ActiveDoc
+      metadata:
+        name: customer-management-api-v2
+        namespace: amp
+      spec:
+        providerAccountRef:
+          name: red-hat-tenant
+        activeDocOpenAPIRef:
+          url: 'http://registry.registry.router-default.{{ wildcarddomain }}/apis/registry/v2/groups/philorg/artifacts/customerapi/versions/2'
+        skipSwaggerValidations: True
+        name: Customer Management API v2
+        published: true
+        description: Customer Management API
+        productSystemName: Customer-Management-API
+
+- name: Create IssuerEndpoint secret
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    definition:
+      kind: Secret
+      apiVersion: v1
+      metadata:
+        name: 3scale-issuer-endpoint
+        namespace: amp
+      stringData:
+        issuerEndpoint: "http://3scale-admin:3scale-admin-secret@sso-sso-clear.{{ wildcarddomain }}/auth/realms/3scale"
+
+- name: Add customer management API product API OAuth
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    definition:
+      apiVersion: capabilities.3scale.net/v1beta1
+      kind: Product
+      metadata:
+        namespace: amp
+        name: customer-management-api-oauth
+      spec:
+        metrics:
+          hits:
+            description: Number of API hits
+            friendlyName: Hits
+            unit: hit
+          v1:
+            description: Count of calls to the v1 API
+            friendlyName: v1
+            unit: count
+          v2:
+            description: Count of calls to the v2 API
+            friendlyName: v2
+            unit: count
+        deployment:
+          apicastHosted:
+            authentication:
+              oidc:
+                issuerType: "keycloak"
+                issuerEndpointRef:
+                  name: 3scale-issuer-endpoint                
+                authenticationFlow:
+                  standardFlowEnabled: true
+                  implicitFlowEnabled: true
+                  serviceAccountsEnabled: true
+                  directAccessGrantsEnabled: true
+                jwtClaimWithClientID: "azp"
+                jwtClaimWithClientIDType: "plain"
+                credentials: "headers"
+        backendUsages:
+          customer-management-api-v1:
+            path: /v1
+          customer-management-api-v2:
+            path: /v2
+        mappingRules:
+          - httpMethod: GET
+            increment: 1
+            metricMethodRef: listAllMembers
+            pattern: '/{version}/membersweb/rest/members$'
+          - httpMethod: POST
+            increment: 1
+            metricMethodRef: createMember
+            pattern: '/{version}/membersweb/rest/members$'
+          - httpMethod: GET
+            increment: 1
+            metricMethodRef: hello
+            pattern: '/{version}/membersweb/rest/members/hello$'
+          - httpMethod: DELETE
+            increment: 1
+            metricMethodRef: deleteMember
+            pattern: '/{version}/membersweb/rest/members/{email}$'
+          - httpMethod: GET
+            increment: 1
+            metricMethodRef: lookupMemberById
+            pattern: '/{version}/membersweb/rest/members/{id}$'
+          - httpMethod: POST
+            increment: 1
+            metricMethodRef: v1
+            pattern: /v1
+          - httpMethod: DELETE
+            increment: 1
+            metricMethodRef: v1
+            pattern: /v1
+          - httpMethod: GET
+            increment: 1
+            metricMethodRef: v1
+            pattern: /v1
+          - httpMethod: POST
+            increment: 1
+            metricMethodRef: v2
+            pattern: /v2
+          - httpMethod: DELETE
+            increment: 1
+            metricMethodRef: v2
+            pattern: /v2
+          - httpMethod: GET
+            increment: 1
+            metricMethodRef: v2
+            pattern: /v2
+        name: Customer Management API OAuth
+        policies:
+          - name: cors
+            version: builtin
+            configuration:
+              allow_methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              allow_origin: "*"
+            enabled: true
+          - configuration: {}
+            configurationRef: {}
+            enabled: true
+            name: apicast
+            version: builtin
+        methods:
+          createMember:
+            description: Create Member
+            friendlyName: createMember
+          deleteMember:
+            description: Delete Member
+            friendlyName: delete member
+          hello:
+            description: Hello
+            friendlyName: hello
+          listAllMembers:
+            description: List all Members
+            friendlyName: list All Members
+          lookupMemberById:
+            description: lookup Member By Id
+            friendlyName: lookup Member By Id
+        providerAccountRef:
+          name: red-hat-tenant
+        systemName: Customer-Management-API-OAuth
+        applicationPlans:
+          bronze-members-plans-v1:
+            appsRequireApproval: true
+            costMonth: '10'
+            limits:
+              - metricMethodRef:
+                  systemName: listAllMembers
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: createMember
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: hello
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: deleteMember
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: lookupMemberById
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: v1
+                period: day
+                value: 10000
+            pricingRules:
+              - metricMethodRef:
+                  systemName: listAllMembers
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: createMember
+                pricePerUnit: "0.50"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: deleteMember
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: lookupMemberById
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+            name: Bronze Members Plan V1
+            published: true
+            setupFee: '25'
+            trialPeriod: 10
+          bronze-members-plans-v2:
+            appsRequireApproval: true
+            costMonth: '10'
+            limits:
+              - metricMethodRef:
+                  systemName: listAllMembers
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: createMember
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: hello
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: deleteMember
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: lookupMemberById
+                period: minute
+                value: 40
+              - metricMethodRef:
+                  systemName: v1
+                period: day
+                value: 10000
+            pricingRules:
+              - metricMethodRef:
+                  systemName: listAllMembers
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: createMember
+                pricePerUnit: "0.50"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: deleteMember
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: lookupMemberById
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+            name: Bronze Members Plan V2
+            published: true
+            setupFee: '25'
+            trialPeriod: 10
+          restricted-bronze-members-plans-v1:
+            appsRequireApproval: true
+            costMonth: '10'
+            limits:
+              - metricMethodRef:
+                  systemName: listAllMembers
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: createMember
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: hello
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: deleteMember
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: lookupMemberById
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: v1
+                period: day
+                value: 10000
+            pricingRules:
+              - metricMethodRef:
+                  systemName: listAllMembers
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: createMember
+                pricePerUnit: "0.50"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: deleteMember
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: lookupMemberById
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+            name: Restricted Bronze Members Plan V1
+            published: true
+            setupFee: '25'
+            trialPeriod: 10
+          restricted-bronze-members-plans-v2:
+            appsRequireApproval: true
+            costMonth: '10'
+            limits:
+              - metricMethodRef:
+                  systemName: listAllMembers
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: createMember
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: hello
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: deleteMember
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: lookupMemberById
+                period: minute
+                value: 10
+              - metricMethodRef:
+                  systemName: v1
+                period: day
+                value: 10000
+            pricingRules:
+              - metricMethodRef:
+                  systemName: listAllMembers
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: createMember
+                pricePerUnit: "0.50"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: deleteMember
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+              - metricMethodRef:
+                  systemName: lookupMemberById
+                pricePerUnit: "0.25"
+                from: 1
+                to: 1000
+            name: RestrictedBronze Members Plan V2
+            published: true
+            setupFee: '25'
+            trialPeriod: 10
+        description: Customer Management API OAuth
+
+- name: Promote customer management API OAuth product API
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    definition:
+      apiVersion: capabilities.3scale.net/v1beta1
+      kind: ProxyConfigPromote
+      metadata:
+        name: promote-customer-management-api-oauth
+        namespace: amp
+      spec:
+        deleteCR: true
+        productCRName: customer-management-api-oauth
+        production: true
+
+#- name: Add the Activedoc to 3scale - OAuth auth
+#  k8s:
+#    api_key: "{{ ocp_login_token }}"
+#    host: "{{ ocp_url }}"
+#    validate_certs: no
+#    state: present
+#    definition:
+#      apiVersion: capabilities.3scale.net/v1beta1
+#      kind: ActiveDoc
+#      metadata:
+#        name: customer-management-api-v2-oauth
+#        namespace: amp
+#      spec:
+#        providerAccountRef:
+#          name: red-hat-tenant
+#        activeDocOpenAPIRef:
+#          url: 'http://registry.registry.router-default.apps.cluster-xmxfd.dynamic.redhatworkshops.io/apis/registry/v2/groups/philorg/artifacts/customerapi-oauth/versions/1'
+#        name: customer-management-api-v2-oauth
+#        published: true
+#        description: Customer Management API OAuth 
+#        productSystemName: Custome-Management-API-OAuth
+#        skipSwaggerValidations: true
+

@@ -5,8 +5,10 @@
 
   roles:
     - ocp_login
-#    - sso
-#    - configure_sso
-#    - 3scale
-#    - configure_3Scale_tenant
-#    - install3ScaleAPIs
+    - install_postgres
+    - install_registry
+    - sso
+    - configure_sso
+    - 3scale
+    - configure_3Scale_tenant
+    - install3ScaleAPIs

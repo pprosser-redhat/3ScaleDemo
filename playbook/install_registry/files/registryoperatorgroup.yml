@@ -1,0 +1,11 @@
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  annotations:
+    olm.providedAPIs: ApicurioRegistry.v1.registry.apicur.io
+  name: registry
+  namespace: registry
+spec:
+  targetNamespaces:
+    - registry
+  upgradeStrategy: Default

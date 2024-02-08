@@ -15,6 +15,9 @@ spec:
     secret: 3scale-admin-secret
     serviceAccountsEnabled: true
     standardFlowEnabled: false
+  serviceAccountClientRoles:
+    realm-management:
+      - manage-clients
   realmSelector:
     matchLabels:
       realm: 3scale-realm

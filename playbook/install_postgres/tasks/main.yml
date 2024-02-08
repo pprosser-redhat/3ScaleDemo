@@ -1,0 +1,31 @@
+---
+# tasks file for install_postgres
+
+- name: Deploy Crunchy Postgres Operator
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    src: "{{ role_path }}/files/crunchysubscription.yaml"
+
+- name: Get the operator deployment
+  kubernetes.core.k8s_info:
+    wait: true
+    api_version: v1
+    kind: Deployment
+    name: pgo
+    namespace: openshift-operators
+  register: pgoclusterdeployment
+  retries: 20
+
+- name: Get the version of the operator being deployed
+  ansible.builtin.set_fact: 
+    pgoclusterversion: "{{ pgoclusterdeployment.resources | json_query('[0].metadata.ownerReferences[0].name') }}"
+
+- name: Wait for the Crunchy Operator to start
+  shell: oc get csv {{ pgoclusterversion }} -n openshift-operators -o jsonpath="{.status.reason}"
+  register: pgooperator
+  until: pgooperator.stdout.find("InstallSucceeded") != -1
+  retries: 200
+
