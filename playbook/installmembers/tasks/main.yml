@@ -38,9 +38,9 @@
     api_key: "{{ ocp_login_token }}"
     host: "{{ ocp_url }}"
     validate_certs: no
-    chart_ref: https://github.com/pprosser-redhat/3ScaleDemo/raw/fullchangetooperator/members/members-0.1.0.tgz
+    chart_ref: https://github.com/pprosser-redhat/3ScaleDemo/raw/master/members/members-0.1.0.tgz
     values_files: 
-      - https://raw.githubusercontent.com/pprosser-redhat/3ScaleDemo/fullchangetooperator/members/valuesv1.yaml
+      - https://raw.githubusercontent.com/pprosser-redhat/3ScaleDemo/master/members/valuesv1.yaml
     release_namespace: membersapp
     release_name: membersdemov1
 
@@ -49,8 +49,8 @@
     api_key: "{{ ocp_login_token }}"
     host: "{{ ocp_url }}"
     validate_certs: no
-    chart_ref: https://github.com/pprosser-redhat/3ScaleDemo/raw/fullchangetooperator/members/members-0.1.0.tgz
+    chart_ref: https://github.com/pprosser-redhat/3ScaleDemo/raw/master/members/members-0.1.0.tgz
     values_files: 
-      - https://raw.githubusercontent.com/pprosser-redhat/3ScaleDemo/fullchangetooperator/members/valuesv2.yaml
+      - https://raw.githubusercontent.com/pprosser-redhat/3ScaleDemo/master/members/valuesv2.yaml
     release_namespace: membersapp
     release_name: membersdemov2
