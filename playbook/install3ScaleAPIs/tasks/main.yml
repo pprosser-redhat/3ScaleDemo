@@ -21,7 +21,7 @@
         providerAccountRef:
           name: red-hat-tenant
         name: customer-management-api-v2
-        privateBaseURL: 'http://membersdemov2.membersapp.svc.cluster.local:80'
+        privateBaseURL: 'http://membersdemov2.membersapp.svc.cluster.local:8080'
         systemName: customer-management-api-v2
         description: Customer Management API Backend v2
 
@@ -41,7 +41,7 @@
         providerAccountRef:
           name: red-hat-tenant
         name: customer_management-api-v1
-        privateBaseURL: 'http://membersdemov1.membersapp.svc.cluster.local:80'
+        privateBaseURL: 'http://membersdemov1.membersapp.svc.cluster.local:8080'
         systemName: customer-management-api-v1
         description: Customer Management API Backend v1
 
