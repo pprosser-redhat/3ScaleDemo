@@ -28,6 +28,8 @@
       metadata:
         name: redhat-tenant
         namespace: amp
+        annotations:
+          "insecure_skip_verify": "true"
         labels:
           tenant: redhat-tenant
       spec:
@@ -37,7 +39,7 @@
         organizationName: Red Hat
         passwordCredentialsRef:
           name: red-hat-tenant-admin-secret
-        systemMasterUrl: "https://master.{{ wildcarddomain }}"
+        systemMasterUrl: "http://system-master:3000"
         tenantSecretRef:
           name: red-hat-tenant
           namespace: amp

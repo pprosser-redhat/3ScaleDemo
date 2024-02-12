@@ -17,6 +17,8 @@
       metadata:
         name: customer-management-api-v2
         namespace: amp
+        annotations:
+          "insecure_skip_verify": "true"
       spec:
         providerAccountRef:
           name: red-hat-tenant
@@ -37,6 +39,8 @@
       metadata:
         name: 'customer-management-api-v1'
         namespace: amp
+        annotations:
+          "insecure_skip_verify": "true"
       spec:
         providerAccountRef:
           name: red-hat-tenant
@@ -57,6 +61,8 @@
       metadata:
         namespace: amp
         name: customer-management-api
+        annotations:
+          "insecure_skip_verify": "true"
       spec:
         metrics:
           hits:
@@ -390,6 +396,8 @@
       metadata:
         name: promote-customer-management-api
         namespace: amp
+        annotations:
+          "insecure_skip_verify": "true"
       spec:
         deleteCR: true
         productCRName: customer-management-api
@@ -407,6 +415,8 @@
       metadata:
         name: customer-management-api-v1
         namespace: amp
+        annotations:
+          "insecure_skip_verify": "true"
       spec:
         providerAccountRef:
           name: red-hat-tenant
@@ -430,6 +440,8 @@
       metadata:
         name: customer-management-api-v2
         namespace: amp
+        annotations:
+          "insecure_skip_verify": "true"
       spec:
         providerAccountRef:
           name: red-hat-tenant
@@ -468,6 +480,8 @@
       metadata:
         namespace: amp
         name: customer-management-api-oauth
+        annotations:
+          "insecure_skip_verify": "true"
       spec:
         metrics:
           hits:
@@ -810,6 +824,8 @@
       metadata:
         name: promote-customer-management-api-oauth
         namespace: amp
+        annotations:
+          "insecure_skip_verify": "true"
       spec:
         deleteCR: true
         productCRName: customer-management-api-oauth
