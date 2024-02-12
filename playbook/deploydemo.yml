@@ -12,3 +12,4 @@
     - 3scale
     - configure_3Scale_tenant
     - install3ScaleAPIs
+    - installmembers

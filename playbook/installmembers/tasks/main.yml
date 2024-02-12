@@ -1,0 +1,56 @@
+---
+# tasks file for installmembers
+- name: Create membersapp namespace
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    wait: true
+    state: present
+    src: "{{ role_path }}/files/membersappnamespace.yml"
+
+- name: Create members postgres database
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    wait: true
+    state: present
+    src: "{{ role_path }}/files/members_database.yml"
+
+- name: Wait for the registry database to be created
+  shell: oc get PostgresCluster members -n membersapp -o jsonpath="{.status.conditions[0].status}"
+  register: membersdbready
+  until: membersdbready.stdout.find("True") != -1
+  retries: 200
+
+- name: Create member config map
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    wait: true
+    state: present
+    src: "{{ role_path }}/files/member_cm.yml"
+
+- name: Deploy version 1 of the members app
+  kubernetes.core.helm:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    chart_ref: https://github.com/pprosser-redhat/3ScaleDemo/raw/fullchangetooperator/members/members-0.1.0.tgz
+    values_files: 
+      - https://raw.githubusercontent.com/pprosser-redhat/3ScaleDemo/fullchangetooperator/members/valuesv1.yaml
+    release_namespace: membersapp
+    release_name: membersdemov1
+
+- name: Deploy version 2 of the members app
+  kubernetes.core.helm:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    chart_ref: https://github.com/pprosser-redhat/3ScaleDemo/raw/fullchangetooperator/members/members-0.1.0.tgz
+    values_files: 
+      - https://raw.githubusercontent.com/pprosser-redhat/3ScaleDemo/fullchangetooperator/members/valuesv2.yaml
+    release_namespace: membersapp
+    release_name: membersdemov2
