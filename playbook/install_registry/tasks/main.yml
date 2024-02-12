@@ -49,6 +49,7 @@
     kind: Deployment
     name: apicurio-registry-operator-v1.2.2-redhat.1
     namespace: registry
+    wait: True
   register: registrydeployment
   retries: 20
 
