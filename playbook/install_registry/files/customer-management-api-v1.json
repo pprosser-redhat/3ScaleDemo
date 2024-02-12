@@ -1,0 +1,275 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+      "title": "Customer Management API",
+      "version": "1.0.0",
+      "description": "This API allows you to manage customers in the Saas Service",
+      "contact": {
+          "name": "Phil Prosser",
+          "url": "https://www.redhat.com",
+          "email": "pprosser@redhat.com"
+      },
+      "license": {
+          "name": "Apache 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+      }
+  },
+  "paths": {
+      "/{version}/membersweb/rest/members/hello": {
+          "get": {
+              "tags": [
+                  "Customer"
+              ],
+              "responses": {
+                  "200": {
+                      "content": {
+                          "text/plain": {
+                              "schema": {
+                                  "type": "string"
+                              }
+                          }
+                      },
+                      "description": "OK"
+                  }
+              },
+              "security": [
+                  {
+                      "apikey": []
+                  }
+              ]
+          },
+          "parameters": [
+              {
+                  "examples": {
+                      "v1": {
+                          "value": "v1"
+                      }
+                  },
+                  "name": "version",
+                  "schema": {
+                      "type": "string"
+                  },
+                  "in": "path",
+                  "required": true
+              }
+          ]
+      },
+      "/{version}/membersweb/rest/members": {
+          "get": {
+              "tags": [
+                  "Customer"
+              ],
+              "responses": {
+                  "200": {
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "type": "array",
+                                  "items": {
+                                      "$ref": "#/components/schemas/Member"
+                                  }
+                              }
+                          }
+                      },
+                      "description": "OK"
+                  }
+              },
+              "security": [
+                  {
+                      "apikey": []
+                  }
+              ]
+          },
+          "post": {
+              "requestBody": {
+                  "content": {
+                      "application/json": {
+                          "schema": {
+                              "$ref": "#/components/schemas/Member"
+                          }
+                      }
+                  }
+              },
+              "tags": [
+                  "Customer"
+              ],
+              "responses": {
+                  "200": {
+                      "description": "OK"
+                  }
+              },
+              "security": [
+                  {
+                      "apikey": []
+                  }
+              ]
+          },
+          "parameters": [
+              {
+                  "examples": {
+                      "v1": {
+                          "value": "v1"
+                      }
+                  },
+                  "name": "version",
+                  "schema": {
+                      "type": "string"
+                  },
+                  "in": "path",
+                  "required": true
+              }
+          ]
+      },
+      "/{version}/membersweb/rest/members/{email}": {
+          "delete": {
+              "tags": [
+                  "Customer"
+              ],
+              "parameters": [
+                  {
+                      "name": "email",
+                      "schema": {
+                          "type": "string"
+                      },
+                      "in": "path",
+                      "required": true
+                  }
+              ],
+              "responses": {
+                  "200": {
+                      "description": "OK"
+                  }
+              },
+              "security": [
+                  {
+                      "apikey": []
+                  }
+              ]
+          },
+          "parameters": [
+              {
+                  "name": "email",
+                  "schema": {
+                      "type": "string"
+                  },
+                  "in": "path",
+                  "required": true
+              },
+              {
+                  "examples": {
+                      "v1": {
+                          "value": "v1"
+                      }
+                  },
+                  "name": "version",
+                  "schema": {
+                      "type": "string"
+                  },
+                  "in": "path",
+                  "required": true
+              }
+          ]
+      },
+      "/{version}/membersweb/rest/members/{id}": {
+          "get": {
+              "tags": [
+                  "Customer"
+              ],
+              "parameters": [
+                  {
+                      "name": "id",
+                      "schema": {
+                          "type": "integer"
+                      },
+                      "in": "path",
+                      "required": true
+                  }
+              ],
+              "responses": {
+                  "200": {
+                      "content": {
+                          "application/json": {
+                              "schema": {
+                                  "$ref": "#/components/schemas/Member"
+                              }
+                          }
+                      },
+                      "description": "OK"
+                  }
+              },
+              "security": [
+                  {
+                      "apikey": []
+                  }
+              ]
+          },
+          "parameters": [
+              {
+                  "name": "id",
+                  "in": "path",
+                  "required": true
+              },
+              {
+                  "examples": {
+                      "v1": {
+                          "value": "v1"
+                      }
+                  },
+                  "name": "version",
+                  "schema": {
+                      "type": "string"
+                  },
+                  "in": "path",
+                  "required": true
+              }
+          ]
+      }
+  },
+  "components": {
+      "schemas": {
+          "Member": {
+              "required": [
+                  "name",
+                  "email",
+                  "phoneNumber"
+              ],
+              "type": "object",
+              "properties": {
+                  "id": {
+                      "format": "int64",
+                      "type": "integer"
+                  },
+                  "name": {
+                      "maxLength": 25,
+                      "minLength": 1,
+                      "pattern": "[^0-9]*",
+                      "type": "string"
+                  },
+                  "email": {
+                      "type": "string"
+                  },
+                  "phoneNumber": {
+                      "maxLength": 12,
+                      "minLength": 8,
+                      "pattern": "^\\d{1,12}$",
+                      "type": "string"
+                  }
+              }
+          }
+      },
+      "securitySchemes": {
+          "apikey": {
+              "type": "apiKey",
+              "description": "Authentication required to use the customer API",
+              "name": "user-key",
+              "in": "header"
+          }
+      }
+  },
+  "tags": [
+      {
+          "name": "Customer",
+          "description": "Customer Management"
+      }
+  ]
+}

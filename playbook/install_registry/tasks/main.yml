@@ -1,0 +1,121 @@
+---
+# tasks file for install_registry
+
+- name: Create registry namespace
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    wait: true
+    state: present
+    src: "{{ role_path }}/files/registrynamespace.yml"
+
+- name: Create postgres database
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    wait: true
+    state: present
+    src: "{{ role_path }}/files/registry_database.yml"
+
+- name: Wait for the registry database to be created
+  shell: oc get PostgresCluster registry-db -n registry -o jsonpath="{.status.conditions[0].status}"
+  register: registrydbready
+  until: registrydbready.stdout.find("True") != -1
+  retries: 200
+
+- name: Deploy Service Registry Operator Group
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    wait: true
+    src: "{{ role_path }}/files/registryoperatorgroup.yml"
+
+- name: Deploy Service Registry Operator
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    state: present
+    wait: true
+    src: "{{ role_path }}/files/registryoperator.yml"
+
+- name: Get the operator deployment
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Deployment
+    name: apicurio-registry-operator-v1.2.2-redhat.1
+    namespace: registry
+    wait: True
+  register: registrydeployment
+  retries: 20
+
+- name: Get the version of the registry operator being deployed
+  ansible.builtin.set_fact: 
+    registryclusterversion: "{{ registrydeployment.resources | json_query('[0].metadata.ownerReferences[0].name') }}"
+
+- name: Wait for the Regsitry Operator to start
+  shell: oc get csv {{ registryclusterversion }} -n registry -o jsonpath="{.status.reason}"
+  register: registryoperator
+  until: registryoperator.stdout.find("InstallSucceeded") != -1
+  retries: 200
+
+- name: Create ApicurioRegistry
+  k8s:
+    api_key: "{{ ocp_login_token }}"
+    host: "{{ ocp_url }}"
+    validate_certs: no
+    wait: true
+    state: present
+    wait_condition:  
+      type: Ready
+      status: True
+    definition:
+      apiVersion: registry.apicur.io/v1
+      kind: ApicurioRegistry
+      metadata:
+        name: registry
+        namespace: registry
+      spec:
+        configuration:
+          env:
+            - name: QUARKUS_DATASOURCE_JDBC_URL
+              valueFrom:
+                secretKeyRef:
+                  key: jdbc-uri
+                  name: registry-db-pguser-registry
+          persistence: sql
+        deployment:
+          host: registry.registry.router-default.{{ wildcarddomain }}
+          replicas: 1
+
+- name: Add Customer API Spec version 1
+  ansible.builtin.uri:
+    validate_certs: no
+    method: POST
+    url: "http://registry.registry.router-default.{{ wildcarddomain }}/apis/registry/v2/groups/philorg/artifacts"
+    status_code: 200
+    body_format: json
+    headers:
+      Content-Type: application/json
+      X-Registry-ArtifactId: customerapi
+      X-Registry-Version: 1
+    src: "{{ role_path }}/files/customer-management-api-v1.json"
+  ignore_errors: true
+
+- name: Add Customer API Spec version 2
+  ansible.builtin.uri:
+    validate_certs: no
+    method: PUT
+    url: "http://registry.registry.router-default.{{ wildcarddomain }}/apis/registry/v2/groups/philorg/artifacts/customerapi"
+    status_code: 200
+    body_format: json
+    headers:
+      Content-Type: application/json
+      X-Registry-ArtifactId: customerapi
+      X-Registry-Version: 2
+    src: "{{ role_path }}/files/customer-management-api-v2.json"
+  ignore_errors: true

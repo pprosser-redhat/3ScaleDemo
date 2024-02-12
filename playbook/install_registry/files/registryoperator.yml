@@ -1,0 +1,12 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: service-registry-operator
+  namespace: registry
+spec:
+  channel: 2.x
+  installPlanApproval: Automatic
+  name: service-registry-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  startingCSV: service-registry-operator.v2.3.1-0.1706181988.p
